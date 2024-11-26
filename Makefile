@@ -5,8 +5,8 @@ OUTPUT_FILES := $(patsubst src/%.c,build/%,$(SRC_FILES))
 
 all: $(OUTPUT_FILES)
 
-$(OUTPUT_FILES): $(SRC_FILES)
-	$(CC) $(CFLAGS) $< -o $@ 
+build/%: src/%.c
+	$(CC) $(CFLAGS) $^ -o $@ 
 
 clean:
 	rm -rf $(wildcard $(OUTPUT_FILES)*)
