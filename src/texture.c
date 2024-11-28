@@ -67,8 +67,12 @@ int loop() {
 	static int player_dist = 10;
 
 	for (int i = 0; i < SCREEN_HEIGHT; i++) {
-		for (int j = 0; j < SCREEN_WIDTH; j++)
-			state.pixels[i*SCREEN_WIDTH + j] = 0x00000000;
+		for (int j = 0; j < SCREEN_WIDTH; j++) {
+			if (i == 0 || j == 0)
+				state.pixels[i * SCREEN_WIDTH + j] = 0x00000000;
+			else
+				state.pixels[i*SCREEN_WIDTH + j] = (i ^ j) & 0xFFFFFFFF;
+		}
 	}
 
 	while (SDL_PollEvent(&e)) {
@@ -101,7 +105,7 @@ int loop() {
 
 	for (int i = draw_start; i <= draw_end; i ++) {
 		for (int j = pixel_start; j <= pixel_end; j++) {
-			state.pixels[i*SCREEN_WIDTH + j] = 0xFFFFFFFF;
+			state.pixels[i*SCREEN_WIDTH + j] = ((i ^ j) << 20) & 0xFFFFFFFF;
 		}
 	}
 	
