@@ -29,7 +29,7 @@ typedef struct {
 	vec3 vertex[8];
 	vec2 edge[12];
 	vec3 center;
-} cube;
+} polygon;
 
 void clear_pixels() {
 	for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++)
@@ -47,7 +47,7 @@ void rotate(vec3* p, float x, float y, float z) {
 	p->y = (cos(z) * p->y) + (sin(z) * p->x);
 }
 
-void get_center(cube* c, int len) {
+void get_center(polygon* c, int len) {
 	c->center.x = 0; c->center.y = 0; c->center.z = 0;
 	for (int i = 0; i < len; i++) {
 		c->center.x += c->vertex[i].x;
@@ -89,7 +89,7 @@ int main() {
 
 int init() {
 	state.win = SDL_CreateWindow(
-		"texture_test",
+		"cube_test",
 		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 		SCREEN_WIDTH, SCREEN_HEIGHT,
 		SDL_WINDOW_SHOWN
@@ -123,17 +123,17 @@ int loop() {
 	clear_pixels();
 	SDL_Event e;
 
-	static cube c = {
+	static polygon c = {
 		{
-			{200, 200, 0},
-			{300, 200, 0},
+			{150, 150, 0},
+			{300, 150, 0},
 			{300, 300, 0},
-			{200, 300, 0},
+			{150, 300, 0},
 
-			{200, 200, 100},
-			{300, 200, 100},
-			{300, 300, 100},
-			{200, 300, 100},
+			{150, 150, 150},
+			{300, 150, 150},
+			{300, 300, 150},
+			{150, 300, 150},
 		},
 		{
 			{0,4},
@@ -151,8 +151,9 @@ int loop() {
 			{6,7},
 			{7,4},
 		},
-		{250,250,50},
+		{0,0,0},
 	};
+	get_center(&c, 8);
 
 	for (int i = 0; i < 8; i++) {
 		c.vertex[i].x -= c.center.x;
