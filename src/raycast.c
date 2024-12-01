@@ -8,9 +8,9 @@
 #define SCREEN_HEIGHT	400
 
 #define ANGULAR_SPEED	1
-#define NUM_RAYS	256
+#define NUM_RAYS	180
 
-enum direction {
+enum dir {
 	LEFT = 1,
 	RIGHT = -1,
 	FWD = 1,
@@ -25,8 +25,8 @@ typedef struct {
 } vec2;
 
 typedef struct {
-	vec2 position;
-	vec2 direction;
+	vec2 pos;
+	vec2 dir;
 } player;
 
 struct {
@@ -35,7 +35,6 @@ struct {
 	SDL_Texture* texture;
 	u32 pixels[SCREEN_WIDTH * SCREEN_HEIGHT];
 	player player;
-	u8 quit;
 } state;
 
 int map[] = {
@@ -118,24 +117,24 @@ int init() {
 		return 1;
 	}
 
-	state.player.position.x = 10;
-	state.player.position.y = 10;
-	state.player.direction.x = 1;
-	state.player.direction.y = 0;
+	state.player.pos.x = 10;
+	state.player.pos.y = 10;
+	state.player.dir.x = 1;
+	state.player.dir.y = 0;
 	return 0;
 }
 
 void move(player* p, int dir) {
-	float angle = atan2(p->direction.y, p->direction.x);
-	p->position.x += cos(angle) * dir;
-	p->position.y += sin(angle) * dir;
+	float angle = atan2(p->dir.y, p->dir.x);
+	p->pos.x += cos(angle) * dir;
+	p->pos.y += sin(angle) * dir;
 }
 
 void rotate(player* p, int dir) {
-	float angle = atan2(p->direction.y, p->direction.x);
+	float angle = atan2(p->dir.y, p->dir.x);
 	angle += ANGULAR_SPEED;
-	p->direction.x = cos(angle) * dir;
-	p->direction.y = sin(angle) * dir;
+	p->dir.x = cos(angle) * dir;
+	p->dir.y = sin(angle) * dir;
 }
 
 void render_screen() {
@@ -155,7 +154,33 @@ void render_screen() {
 }
 
 void raycast(player* p, int ray_pos) {
-	
+	float angle = atan2(p->dir.y, p->dir.x) + (float)(ray_pos - 90);
+	vec2 start, end;
+	float dist;
+	float map_x = p->pos.x;
+	float map_y = p->pos.y;
+	int hit = map[(int)(map_x*16 + map_y)];
+
+	while (hit == 0) {
+		map_x += cos(angle);
+		map_y += sin(angle);
+		hit = map[(int)(map_x*16 + map_y)];
+	}
+
+	float dx = (float)map_x - p->pos.x;
+	float dy = (float)map_y - p->pos.y;
+	dist = sqrt(dx*dx + dy*dy) - 1;
+	float draw_w = cos(angle) * SCREEN_WIDTH;
+	float draw_h = SCREEN_HEIGHT / dist;
+
+	start.x = draw_w;
+	end.x = draw_w;
+
+	start.y = (SCREEN_HEIGHT + draw_h) / 2;
+	end.y = (SCREEN_HEIGHT - draw_h) / 2;
+
+	printf("Casting ray:\n\tAngle: %f\n\tPlayer: [%f,%f] Dir: [%f, %f]\n\tLength: %f\n", angle, p->pos.x, p->pos.y, p->dir.x, p->dir.y, dist);
+	draw_line(&start, &end);
 }
 
 int loop() {
@@ -184,10 +209,6 @@ int loop() {
 				break;
 		}
 	}
-
-	printf("PLAYER_STATE:\n\tPosition: [%f,%f]\n\tDirection: [%f,%f]\n",
-	       		state.player.position.x, state.player.position.y, 
-	       		state.player.direction.x, state.player.direction.y);
 
 	for (int i = 0; i < NUM_RAYS; i++) {
 		raycast(&state.player, i);
