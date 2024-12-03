@@ -1,5 +1,6 @@
 #include "SDL2/SDL_render.h"
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_timer.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <math.h>
@@ -7,7 +8,8 @@
 #define SCREEN_WIDTH	640
 #define SCREEN_HEIGHT	400
 
-#define ANGULAR_SPEED	0.1
+#define WHITE					0xFFFFFFFF
+#define GREY					0x88888888
 
 enum dir {
 	LEFT = -1,
@@ -77,7 +79,7 @@ void validate_location(vec2* loc) {
 	loc->y = (loc->y > SCREEN_HEIGHT-1) ? SCREEN_HEIGHT - 1 : loc->y;
 }
 
-void draw_line(vec2* start, vec2* end) {
+void draw_line(vec2* start, vec2* end, u32 c) {
 	validate_location(start);
 	validate_location(end);
 	float dx = end->x - start->x;
@@ -89,7 +91,7 @@ void draw_line(vec2* start, vec2* end) {
 	for (float i = 0; i < len; i++) {
 		x = (int)(start->x + i * cos(angle))  + 1;
 		y = (int)(start->y + i * sin(angle)) + 1;
-		state.pixels[y * SCREEN_WIDTH + x] = 0xFFFFFFFF;
+		state.pixels[y * SCREEN_WIDTH + x] = c;
 	}
 }
 
@@ -146,18 +148,23 @@ int init() {
 	return 0;
 }
 
-void move(player* p, int dir) {
+void move(player* p, int dir, float speed) {
 	float angle = atan2(p->dir.y, p->dir.x);
 
-	if (p->pos.x + cos(angle) * dir < 15 && p->pos.x + cos(angle) * dir >= 0)
-		p->pos.x += cos(angle) * dir;
-	if (p->pos.y + sin(angle) * dir < 15 && p->pos.y + sin(angle) * dir >= 0)
-		p->pos.y += sin(angle) * dir;
+	if (map[(int)(p->pos.x + cos(angle) * dir) * 16 + (int)(p->pos.y + sin(angle) * dir)] == 1)
+		return;
+	
+	if (p->pos.x + cos(angle) * dir < 15 && p->pos.x + cos(angle) * dir >= 0.66) {
+		p->pos.x += cos(angle) * dir * speed;
+	}
+	if (p->pos.y + sin(angle) * dir < 15 && p->pos.y + sin(angle) * dir >= 0.66) {
+		p->pos.y += sin(angle) * dir * speed;
+	}
 }
 
-void rotate(player* p, int dir) {
+void rotate(player* p, int dir, float speed) {
 	float angle = atan2(p->dir.y, p->dir.x);
-	angle += ANGULAR_SPEED * dir;
+	angle += speed * dir;
 	p->dir.x = cos(angle);
 	p->dir.y = sin(angle);
 	// ensure the camera plane is always perpendicular to our direction vector
@@ -239,10 +246,16 @@ void raycast(player* p, int slice) {
 
 	slice_start.y = draw_start;
 	slice_end.y = draw_end;
-	draw_line(&slice_start, &slice_end);
+	draw_line(&slice_start, &slice_end, (s == x_side) ? WHITE : GREY);
 }
 
 int loop() {
+	static float time = 0, prev_time = 0;
+	prev_time = time;
+	time = SDL_GetTicks();
+	float dt = (time - prev_time) / 1000.0;
+	float move_speed = 10 * dt, rot_speed = 10 * dt;
+	
 	clear_pixels();
 	SDL_Event e;
 
@@ -253,16 +266,19 @@ int loop() {
 			case SDL_KEYDOWN:
 				switch (e.key.keysym.sym) {
 					case SDLK_w:
-						move(&state.player, FWD);
+						move(&state.player, FWD, move_speed);
 						break;
 					case SDLK_s:
-						move(&state.player, BACK);
+						move(&state.player, BACK, move_speed);
 						break;
 					case SDLK_a:
-						rotate(&state.player, LEFT);
+						rotate(&state.player, LEFT, rot_speed);
 						break;
 					case SDLK_d:
-						rotate(&state.player, RIGHT);
+						rotate(&state.player, RIGHT, rot_speed);
+						break;
+					case SDLK_p:
+						printf("Player Info:\n\tPosition: [%f,%f]\n\tDirection: [%f,%f]\n", state.player.pos.x, state.player.pos.y, state.player.dir.x, state.player.dir.y);
 						break;
 				}
 				break;
