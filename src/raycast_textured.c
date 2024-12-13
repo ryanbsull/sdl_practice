@@ -276,8 +276,8 @@ void raycast(player* p, int slice) {
 	int tex_idx = hit - 1;
 	double wall_hit_x = 
 			(s == x_side) ? 
-			      p->pos.y + dist * p->dir.y : 
-			      p->pos.x + dist * p->dir.x;
+			      p->pos.y + dist * ray_dir.y : 
+			      p->pos.x + dist * ray_dir.x;
 	wall_hit_x -= trunc(wall_hit_x);
 	int tex_slice = (int)(wall_hit_x * (double)TEXTURE_WIDTH);
 	tex_slice = TEXTURE_WIDTH - tex_slice - 1;
