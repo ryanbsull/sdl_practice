@@ -4,10 +4,13 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "SDL2/SDL_keycode.h"
 #include "SDL2/SDL_render.h"
 
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 400
+
+#define MVMT_SPEED 10
 
 enum dir {
   LEFT = -1,
@@ -138,6 +141,19 @@ void render_screen() {
   SDL_RenderPresent(state.renderer);
 }
 
+void move(int dir) {
+  player* p = &state.player;
+  float angle = atan(state.player.dir.x / state.player.dir.y);
+
+  if (dir == FWD || dir == BACK) {
+    p->pos.x += cos((float)angle * M_PI / 180) * dir * MVMT_SPEED;
+    p->pos.y += sin((float)angle * M_PI / 180) * dir * MVMT_SPEED;
+  } else {
+    p->pos.x += cos((float)(angle + 90 * (dir / 2)) * M_PI / 180) * MVMT_SPEED;
+    p->pos.y += sin((float)(angle + 90 * (dir / 2)) * M_PI / 180) * MVMT_SPEED;
+  }
+}
+
 int loop() {
   static float time = 0, prev_time = 0;
   prev_time = time;
@@ -152,7 +168,16 @@ int loop() {
       case SDL_QUIT:
         return 1;
       case SDL_KEYDOWN:
-        switch (e.key.keysym.sym) {}
+        switch (e.key.keysym.sym) {
+          case SDLK_a:
+            move(LEFT);
+          case SDLK_s:
+            move(BACK);
+          case SDLK_d:
+            move(RIGHT);
+          case SDLK_w:
+            move(FWD);
+        }
         break;
     }
   }
